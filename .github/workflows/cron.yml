@@ -1,0 +1,37 @@
+name: Mentari Forum Monitor
+
+on:
+  schedule:
+    # Jalan setiap 30 menit sekali
+    - cron: "*/30 * * * *"
+  workflow_dispatch: # Tombol manual buat ngetes langsung
+
+permissions:
+  contents: write # Izinkan bot update file notified.json ke repo
+
+jobs:
+  check-forum:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Jalankan Script Monitor
+        env:
+          MENTARI_TOKEN: ${{ secrets.MENTARI_TOKEN }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        run: node monitor.js
+
+      - name: Simpan ID Forum yang Sudah Di-notif
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add notified.json
+          git diff --staged --quiet || git commit -m "chore: update notified forum IDs"
+          git push
